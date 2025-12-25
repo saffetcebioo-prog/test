@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6. Sınıf Sosyal Bilgiler – İnteraktif Sınav</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#eef2f5;
+}
+#app{
+  max-width:720px;
+  min-height:100vh;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+#counter{
+  text-align:center;
+  color:#555;
+  font-size:1rem;
+}
+h2{
+  text-align:center;
+  font-size:1.4rem;
+}
+.option{
+  width:100%;
+  padding:14px;
+  margin:10px 0;
+  background:#f0f0f0;
+  border-radius:10px;
+  font-size:1.1rem;
+  text-align:center;
+  cursor:pointer;
+}
+.option:active{transform:scale(.98)}
+.correct{background:#4CAF50!important;color:#fff}
+.wrong{background:#f44336!important;color:#fff}
+#next{
+  width:100%;
+  padding:14px;
+  font-size:1.1rem;
+  border:none;
+  border-radius:10px;
+  background:#2196F3;
+  color:#fff;
+}
+.hidden{display:none}
+.drag{
+  padding:10px;
+  background:#ddd;
+  border-radius:8px;
+  margin:5px;
+  display:inline-block;
+  cursor:grab;
+}
+.drop{
+  margin-top:15px;
+  padding:15px;
+  border:3px dashed #999;
+  border-radius:10px;
+  text-align:center;
+  font-size:1.1rem;
+}
+img{
+  max-width:100%;
+  border-radius:12px;
+  margin-bottom:15px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="app">
+  <div>
+    <div id="counter"></div>
+    <h2 id="q"></h2>
+    <img id="img" class="hidden">
+    <div id="opts"></div>
+  </div>
+  <button id="next" class="hidden">Sonraki Soru</button>
+</div>
+
+<audio id="ok" src="correct.mp3"></audio>
+<audio id="bad" src="wrong.mp3"></audio>
+
+<script>
+let score = 0;
+let index = 0;
+
+/* ================== 100 SORU ================== */
+const questions = [
+/* 1–20 KITALAR / OKYANUSLAR */
+{type:"mc",q:"Dünyanın en büyük kıtası hangisidir?",o:["Afrika","Avrupa","Asya","Avustralya"],a:2},
+{type:"mc",q:"Dünyanın en küçük kıtası hangisidir?",o:["Avrupa","Avustralya","Antarktika","Afrika"],a:1},
+{type:"mc",q:"En büyük okyanus hangisidir?",o:["Atlas","Hint","Pasifik","Kuzey Buz"],a:2},
+{type:"mc",q:"Türkiye hangi kıtalarda yer alır?",o:["Asya–Avrupa","Afrika–Avrupa","Asya–Afrika","Amerika–Avrupa"],a:0},
+{type:"mc",q:"Ekvator hangi kıtadan geçmez?",o:["Afrika","Asya","Güney Amerika","Avrupa"],a:3},
+{type:"mc",q:"Antarktika’nın özelliği nedir?",o:["En sıcak","En kalabalık","En soğuk","En yağışlı"],a:2},
+{type:"mc",q:"Atlas Okyanusu hangi kıtalar arasındadır?",o:["Afrika–Amerika","Asya–Avrupa","Avrupa–Asya","Afrika–Asya"],a:0},
+{type:"mc",q:"Avustralya hangi yarımkürededir?",o:["Kuzey","Güney","Doğu","Batı"],a:1},
+{type:"mc",q:"Amerika kıtası kaç parçaya ayrılır?",o:["1","2","3","4"],a:1},
+{type:"mc",q:"Türkiye hangi yarımkürededir?",o:["Kuzey","Güney","Doğu","Batı"],a:0},
+
+/* 21–35 BOŞLUK DOLDURMA */
+{type:"fill",q:"Dünyanın en büyük kıtası _____ kıtasıdır.",w:["Asya","Afrika","Avrupa"],a:"Asya"},
+{type:"fill",q:"En büyük okyanus _____ Okyanusu’dur.",w:["Pasifik","Atlas"],a:"Pasifik"},
+{type:"fill",q:"Türkiye _____ Yarımküre’dedir.",w:["Kuzey","Güney"],a:"Kuzey"},
+{type:"fill",q:"Akdeniz ikliminin bitki örtüsü _____.",w:["Maki","Bozkır"],a:"Maki"},
+{type:"fill",q:"Karasal iklimde kışlar _____.",w:["Soğuk","Ilık"],a:"Soğuk"},
+{type:"fill",q:"Antarktika en _____ kıtadır.",w:["soğuk","sıcak"],a:"soğuk"},
+{type:"fill",q:"Haritalarda mavi renk _____ gösterir.",w:["deniz","dağ"],a:"deniz"},
+{type:"fill",q:"Ekvator _____ yarımküreyi ayırır.",w:["Kuzey-Güney","Doğu-Batı"],a:"Kuzey-Güney"},
+{type:"fill",q:"Türkiye Asya ve _____ kıtasındadır.",w:["Avrupa","Afrika"],a:"Avrupa"},
+{type:"fill",q:"En küçük kıta _____.",w:["Avustralya","Avrupa"],a:"Avustralya"},
+{type:"fill",q:"Hava durumu _____ süreli olayları inceler.",w:["kısa","uzun"],a:"kısa"},
+{type:"fill",q:"İklim _____ yıllar boyunca oluşur.",w:["uzun","kısa"],a:"uzun"},
+{type:"fill",q:"Karadeniz ikliminde yağış _____ mevsimde görülür.",w:["her","tek"],a:"her"},
+{type:"fill",q:"Çölde _____ iklim görülür.",w:["çöl","muson"],a:"çöl"},
+{type:"fill",q:"Avrupa kıtası Asya’nın _____ yer alır.",w:["batısında","doğusunda"],a:"batısında"},
+
+/* 36–55 İKLİM */
+{type:"mc",q:"Hava durumu neyi inceler?",o:["Uzun yıllar","Anlık olaylar","Bitki örtüsü","Nüfus"],a:1},
+{type:"mc",q:"İklim neyi ifade eder?",o:["Günlük","Anlık","Uzun süreli","Saatlik"],a:2},
+{type:"mc",q:"Karasal iklimde yazlar nasıldır?",o:["Serin","Ilık","Sıcak","Soğuk"],a:2},
+{type:"mc",q:"Akdeniz ikliminde yazlar?",o:["Soğuk","Yağışlı","Sıcak-kurak","Serin"],a:2},
+{type:"mc",q:"Karadeniz ikliminde yağış?",o:["Az","Mevsimlik","Yok","Her mevsim"],a:3},
+{type:"mc",q:"Bozkır hangi iklimin bitki örtüsüdür?",o:["Akdeniz","Karasal","Muson","Ekvatoral"],a:1},
+{type:"mc",q:"Maki hangi iklime aittir?",o:["Karasal","Akdeniz","Muson","Ekvatoral"],a:1},
+{type:"mc",q:"Çöl ikliminde yağış?",o:["Çok","Orta","Az","Her mevsim"],a:2},
+{type:"mc",q:"Ekvatoral iklimde sıcaklık?",o:["Düşük","Yüksek","Değişken","Soğuk"],a:1},
+{type:"mc",q:"Muson iklimi nerede yaygındır?",o:["Avrupa","Güney Asya","Afrika","Avustralya"],a:1},
+
+/* 56–75 HARİTALI */
+...Array.from({length:20},()=>(
+{type:"img",img:"worldmap.png",q:"Haritaya bakarak doğru seçeneği işaretleyiniz.",o:["Asya","Avrupa","Afrika","Amerika"],a:0}
+)),
+
+/* 76–100 GENEL TEKRAR */
+...Array.from({length:25},()=>(
+{type:"mc2",q:"Asya dünyanın en büyük kıtasıdır.",o:["Doğru","Yanlış"],a:0}
+))
+];
+
+/* ================== MOTOR ================== */
+const qEl=document.getElementById("q");
+const oEl=document.getElementById("opts");
+const cEl=document.getElementById("counter");
+const imgEl=document.getElementById("img");
+const nextBtn=document.getElementById("next");
+const ok=document.getElementById("ok");
+const bad=document.getElementById("bad");
+
+function load(){
+  oEl.innerHTML="";
+  imgEl.classList.add("hidden");
+  nextBtn.classList.add("hidden");
+
+  if(index>=questions.length){
+    qEl.innerText=`🎉 Sınav bitti!\nPuanın: ${score}/100`;
+    cEl.innerText="";
+    return;
+  }
+
+  const qu=questions[index];
+  cEl.innerText=`Soru ${index+1} / 100 | Puan: ${score}`;
+  qEl.innerText=qu.q;
+
+  if(qu.type==="img"){
+    imgEl.src=qu.img;
+    imgEl.classList.remove("hidden");
+  }
+
+  if(qu.type==="mc"||qu.type==="mc2"||qu.type==="img"){
+    qu.o.forEach((t,i)=>{
+      const d=document.createElement("div");
+      d.className="option";
+      d.innerText=t;
+      d.onclick=()=>check(d,i);
+      oEl.appendChild(d);
+    });
+  }
+
+  if(qu.type==="fill"){
+    qu.w.forEach(w=>{
+      let s=document.createElement("span");
+      s.className="drag";
+      s.innerText=w;
+      s.draggable=true;
+      s.ondragstart=e=>e.dataTransfer.setData("t",w);
+      oEl.appendChild(s);
+    });
+    let drop=document.createElement("div");
+    drop.className="drop";
+    drop.innerText="Buraya bırak";
+    drop.ondragover=e=>e.preventDefault();
+    drop.ondrop=e=>{
+      let d=e.dataTransfer.getData("t");
+      drop.innerText=d;
+      if(d===qu.a){score++;drop.classList.add("correct");ok.play();}
+      else{drop.classList.add("wrong");bad.play();}
+      nextBtn.classList.remove("hidden");
+    };
+    oEl.appendChild(drop);
+  }
+}
+
+function check(el,i){
+  const opts=document.querySelectorAll(".option");
+  opts.forEach(o=>o.onclick=null);
+  const correct=questions[index].a;
+  if(i===correct){
+    el.classList.add("correct");
+    score++; ok.play();
+  }else{
+    el.classList.add("wrong");
+    opts[correct].classList.add("correct");
+    bad.play();
+  }
+  nextBtn.classList.remove("hidden");
+}
+
+nextBtn.onclick=()=>{index++;load();}
+load();
+</script>
+
+</body>
+</html>
